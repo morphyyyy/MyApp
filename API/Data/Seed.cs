@@ -4,7 +4,7 @@ namespace API.Data
 {
     public class Seed
     {
-        public static async Task SeedData(MyAppContext context)
+        public static async Task SeedData(MyAppDbContext context)
         {
             if (context.Transactions.Any() || context.TransactionTypes.Any()) return;
 
