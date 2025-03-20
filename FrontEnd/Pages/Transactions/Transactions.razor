@@ -1,0 +1,56 @@
+﻿@page "/transactions"
+@inherits TransactionsBase
+
+<h3>Transactions</h3>
+
+@if (Transactions == null)
+{
+	<h3>No data...</h3>
+}
+else
+{
+	<table class="table table-striped">
+		<thead>
+			<tr>
+				<th>Date</th>
+				<th>Description</th>
+				<th class="text-end">Amount</th>
+				<th class="text-end">Balance</th>
+				<th class="text-center">Actions </th>
+			</tr>
+		</thead>
+		<tbody>
+			@if (!Transactions.Any())
+			{
+				<tr>
+					<td class="text-center" colspan=5> Loading... </td>
+				</tr>
+			}
+			else
+			{
+				@for (int i = 0; i < Transactions.Count(); i++)
+				{
+					int Id = @Transactions[i].Id;
+					<tr>
+						<td contenteditable='true'>
+							@Transactions[i].Date.ToString("dddd, MMMM dd, yyyy")
+						</td>
+						<td contenteditable='true'>
+							@Transactions[i].Description
+						</td>
+						<td contenteditable='true' class="text-end" style="color:@(Transactions[i].Amount > 0 ? "green" : "red")">
+							$@Math.Abs(Transactions[i].Amount).ToString("N2")
+						</td>
+						<td contenteditable='true' class="text-end">
+							$@Math.Round(Transactions.GetRange(i, Transactions.Count() - i).Sum(t => t.Amount), 2).ToString("N2")
+						</td>
+						<td class="text-center">
+							<i class="bi bi-plus-lg btn btn-success btn-sm rounded-circle" @onclick="@(() => InsertTransaction(Id))"></i>
+							<i class="bi bi-dash-lg btn btn-danger btn-sm rounded-circle" @onclick="@(() => DeleteTransaction(Id))"></i>
+						</td>
+					</tr>
+				}
+			}
+		</tbody>
+	</table>
+}

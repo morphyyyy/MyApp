@@ -3,6 +3,7 @@ using API.Repositories;
 using API.Repositories.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,12 @@ builder.Services.AddDbContext<MyAppDbContext>(
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
 var app = builder.Build();
+
+app.UseCors(policy =>
+    policy.WithOrigins("https://localhost:7004", "http://localhost:5122")
+    .AllowAnyMethod()
+    .WithHeaders(HeaderNames.ContentType)
+);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
