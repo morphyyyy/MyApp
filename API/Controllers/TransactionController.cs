@@ -2,6 +2,7 @@
 using API.Repositories.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Models.DTOs;
 
 namespace API.Controllers
 {
@@ -17,7 +18,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Transaction>>> GetTransactions()
+        public async Task<ActionResult<IEnumerable<TransactionDTO>>> GetTransactions()
         {
             try
             {
@@ -28,7 +29,28 @@ namespace API.Controllers
                     return NotFound();
                 }
 
-                return Ok(transactions);
+                var transactionDTOs = new List<TransactionDTO>();
+
+                foreach (var transaction in transactions)
+                {
+                    TransactionDTO transactionDTO = new TransactionDTO
+                    {
+                        Id = transaction.Id,
+                        TypeId = transaction.TypeId,
+                        Date = transaction.Date,
+                        Description = transaction.Description,
+                        Amount = transaction.Amount,
+                        CreatedDate = transaction.CreatedDate,
+                        UpdatedDate = transaction.UpdatedDate,
+                        DeletedDate = transaction.DeletedDate
+                    };
+
+                    transactionDTOs.Add(transactionDTO);
+                }
+
+
+
+                return Ok(transactionDTOs);
             }
             catch (Exception ex)
             {
