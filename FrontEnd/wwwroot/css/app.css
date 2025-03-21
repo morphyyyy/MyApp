@@ -112,3 +112,8 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.blurred-text {
+    color: transparent !important;
+    text-shadow: 0 0 10px rgba(0,0,0,1);
+}

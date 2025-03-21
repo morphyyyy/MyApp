@@ -32,16 +32,16 @@ else
 				{
 					int Id = @Transactions[i].Id;
 					<tr>
-						<td contenteditable='true'>
+						<td>
 							@Transactions[i].Date.ToString("dddd, MMMM dd, yyyy")
 						</td>
-						<td contenteditable='true'>
+						<td>
 							@Transactions[i].Description
 						</td>
-						<td contenteditable='true' class="text-end" style="color:@(Transactions[i].Amount > 0 ? "green" : "red")">
+						<td class="text-end" style="color:@(Transactions[i].Amount > 0 ? "green" : "red")">
 							$@Math.Abs(Transactions[i].Amount).ToString("N2")
 						</td>
-						<td contenteditable='true' class="text-end">
+						<td class="text-end">
 							$@Math.Round(Transactions.GetRange(i, Transactions.Count() - i).Sum(t => t.Amount), 2).ToString("N2")
 						</td>
 						<td class="text-center">
