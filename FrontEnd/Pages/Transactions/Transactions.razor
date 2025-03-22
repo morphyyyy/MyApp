@@ -1,4 +1,5 @@
 ﻿@page "/transactions"
+@using Models.DTOs
 @inherits TransactionsBase
 
 <h3>Transactions</h3>
@@ -28,6 +29,13 @@ else
 			}
 			else
 			{
+				<tr>
+					<td><InputDate @bind-Value="newTransactionDTO.Date"></InputDate></td>
+					<td><InputText @bind-Value="newTransactionDTO.Description"></InputText></td>
+					<td class="text-end"><InputNumber @bind-Value="newTransactionDTO.Amount" step="0.01"></InputNumber></td>
+					<td class="text-end"></td>
+					<td><i class="bi bi-plus-lg btn btn-success btn-sm rounded-circle" @onclick="@(() => Create(newTransactionDTO))"></i></td>
+				</tr>
 				@for (int i = 0; i < Transactions.Count(); i++)
 				{
 					int Id = @Transactions[i].Id;
@@ -44,9 +52,9 @@ else
 						<td class="text-end">
 							$@Math.Round(Transactions.GetRange(i, Transactions.Count() - i).Sum(t => t.Amount), 2).ToString("N2")
 						</td>
-						<td class="text-center">
-							<i class="bi bi-plus-lg btn btn-success btn-sm rounded-circle" @onclick="@(() => InsertTransaction(Id))"></i>
-							<i class="bi bi-dash-lg btn btn-danger btn-sm rounded-circle" @onclick="@(() => DeleteTransaction(Id))"></i>
+						<td>
+							@* <i class="bi bi-plus-lg btn btn-success btn-sm rounded-circle" @onclick="@(() => Create(newTransactionDTO))"></i> *@
+							<i class="bi bi-dash-lg btn btn-danger btn-sm rounded-circle" @onclick="@(() => Delete(Id))"></i>
 						</td>
 					</tr>
 				}

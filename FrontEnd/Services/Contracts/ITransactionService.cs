@@ -4,7 +4,8 @@ namespace FrontEnd.Services.Contracts
 {
     public interface ITransactionService
     {
-        Task<List<TransactionDTO>> GetTransactions();
-        //Task InsertTransaction(int Id);
+        Task<List<TransactionDTO>> List();
+        Task<TransactionDTO> Create(TransactionDTO transactionDTO);
+        Task<TransactionDTO> Delete(int id);
     }
 }

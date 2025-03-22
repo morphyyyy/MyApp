@@ -9,20 +9,24 @@ namespace FrontEnd.Pages.Transactions
         [Inject]
         ITransactionService TransactionService { get; set; }
         public List<TransactionDTO> Transactions { get; set; } = new List<TransactionDTO>();
+        public TransactionDTO newTransactionDTO = new TransactionDTO { Date = DateTime.UtcNow };
 
         protected override async Task OnInitializedAsync()
         {
-            Transactions = await TransactionService.GetTransactions();
+            Transactions = await TransactionService.List();
         }
 
-        public async void InsertTransaction(int Id)
+        public async void Create(TransactionDTO transactionDTO)
         {
-            Console.WriteLine($"Insert Transaction: {Id}");
+            newTransactionDTO.TypeId = newTransactionDTO.Amount > 0 ? 1 : 2;
+            await TransactionService.Create(transactionDTO);
+            Transactions = await TransactionService.List();
+            newTransactionDTO = new TransactionDTO { Date = DateTime.UtcNow };
         }
 
-        public async void DeleteTransaction(int Id)
+        public async void Delete(int Id)
         {
-            Console.WriteLine($"Delete Transaction: {Id}");
+            await TransactionService.Delete(Id);
         }
 
     }
