@@ -84,8 +84,8 @@
     {
         await ModalService.ShowAsync(new ModalOption
         {
-            Type = ModalType.Primary,
-            Title = $"{args.Item.Description} - {args.Item.Date.ToString("dddd, MMMM dd, yyyy")}",
+            Type = args.Item.Amount > 0 ? ModalType.Success : ModalType.Danger,
+            Title = $"{args.Item.Date.ToString("dddd, MMMM dd, yyyy")} - {args.Item.Description}",
             Message = $"${args.Item.Amount.ToString("N2")}"
         });
     }
