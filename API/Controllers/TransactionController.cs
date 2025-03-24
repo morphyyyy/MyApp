@@ -37,10 +37,10 @@ namespace API.Controllers
                     TransactionDTO transactionDTO = new TransactionDTO
                     {
                         Id = transaction.Id,
-                        TypeId = transaction.TypeId,
                         Date = transaction.Date,
                         Description = transaction.Description,
                         Amount = transaction.Amount,
+                        Balance = transaction.Balance,
                         CreatedDate = transaction.CreatedDate,
                         UpdatedDate = transaction.UpdatedDate,
                         DeletedDate = transaction.DeletedDate
@@ -65,20 +65,20 @@ namespace API.Controllers
             {
                 Transaction transaction = new Transaction
                 {
-                    TypeId = transactionDTO.TypeId,
                     Date = transactionDTO.Date,
                     Description = transactionDTO.Description,
                     Amount = transactionDTO.Amount,
+                    Balance = transactionDTO.Balance,
                     CreatedDate = DateTime.UtcNow,
                 };
 
                 transaction = await _transactionRepository.Create(transaction);
 
                 transactionDTO.Id = transaction.Id;
-                transactionDTO.TypeId = transaction.TypeId;
                 transactionDTO.Date = transaction.Date;
                 transactionDTO.Description = transaction.Description;
                 transactionDTO.Amount = transaction.Amount;
+                transactionDTO.Balance = transaction.Balance;
                 transactionDTO.CreatedDate = transaction.CreatedDate;
                 transactionDTO.UpdatedDate = transaction.UpdatedDate;
                 transactionDTO.DeletedDate = transaction.DeletedDate;

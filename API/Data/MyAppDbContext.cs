@@ -11,7 +11,6 @@ namespace API.Data
         }
 
         public DbSet<Transaction> Transactions { get; set; }
-        public DbSet<TransactionType> TransactionTypes { get; set; }
 
     }
 }

@@ -1,4 +1,5 @@
-﻿using FrontEnd.Services.Contracts;
+﻿using BlazorBootstrap;
+using FrontEnd.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Models.DTOs;
 
@@ -13,20 +14,21 @@ namespace FrontEnd.Pages.Transactions
 
         protected override async Task OnInitializedAsync()
         {
-            Transactions = await TransactionService.List();
+            Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ToList();
         }
 
         public async void Create(TransactionDTO transactionDTO)
         {
-            newTransactionDTO.TypeId = newTransactionDTO.Amount > 0 ? 1 : 2;
+            newTransactionDTO.Balance = Transactions.Where(t => t.Date <= newTransactionDTO.Date).First().Balance + newTransactionDTO.Amount;
             await TransactionService.Create(transactionDTO);
-            Transactions = await TransactionService.List();
+            Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ToList();
             newTransactionDTO = new TransactionDTO { Date = DateTime.UtcNow };
         }
 
         public async void Delete(int Id)
         {
             await TransactionService.Delete(Id);
+            Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ToList();
         }
 
     }
