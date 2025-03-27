@@ -2,6 +2,7 @@
 using FrontEnd.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Models.DTOs;
+using System.Drawing;
 
 namespace FrontEnd.Pages.Transactions
 {
@@ -10,7 +11,7 @@ namespace FrontEnd.Pages.Transactions
         [Inject]
         ITransactionService TransactionService { get; set; }
         public List<TransactionDTO> Transactions { get; set; } = new List<TransactionDTO>();
-        public TransactionDTO newTransactionDTO = new TransactionDTO { Date = DateTime.UtcNow };
+        public TransactionDTO newTransactionDTO = new TransactionDTO { Date = DateOnly.FromDateTime(DateTime.Now) };
 
         protected override async Task OnInitializedAsync()
         {
@@ -22,7 +23,7 @@ namespace FrontEnd.Pages.Transactions
             newTransactionDTO.Balance = Transactions.Where(t => t.Date <= newTransactionDTO.Date).First().Balance + newTransactionDTO.Amount;
             await TransactionService.Create(transactionDTO);
             Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ToList();
-            newTransactionDTO = new TransactionDTO { Date = DateTime.UtcNow };
+            newTransactionDTO = new TransactionDTO { Date = DateOnly.FromDateTime(DateTime.Now) };
         }
 
         public async void Delete(int Id)

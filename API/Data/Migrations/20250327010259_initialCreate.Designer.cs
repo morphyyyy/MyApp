@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Data.Migrations
 {
     [DbContext(typeof(MyAppDbContext))]
-    [Migration("20250323110537_initialCreate")]
+    [Migration("20250327010259_initialCreate")]
     partial class initialCreate
     {
         /// <inheritdoc />
@@ -42,8 +42,8 @@ namespace API.Data.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime2");

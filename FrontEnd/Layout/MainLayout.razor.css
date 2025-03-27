@@ -9,7 +9,11 @@ main {
 }
 
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    background-image: linear-gradient(180deg, LightSeaGreen 0%, Indigo 100%);
+}
+
+.sidebar-sunset {
+    background-image: radial-gradient(circle at bottom, white 0%, PaleGoldenrod 5%, transparent 15%), linear-gradient(180deg, MidnightBlue 20%, RoyalBlue 60%, LightSkyBlue 85%, Gold 95%, OrangeRed 100%);
 }
 
 .top-row {

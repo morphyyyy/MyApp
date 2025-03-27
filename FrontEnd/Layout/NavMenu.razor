@@ -1,8 +1,9 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">My App</a>
+        <ThemeSwitcher />
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
+            <span class="bi bi-list"></span>
         </button>
     </div>
 </div>
@@ -15,13 +16,13 @@
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="transactions">
+            <NavLink class="nav-link" href="transactions2">
                 <span class="bi bi-piggy-bank-fill-nav-menu" aria-hidden="true"></span> Bank Transactions
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="transactions2">
-                <span class="bi bi-piggy-bank-fill-nav-menu" aria-hidden="true"></span> Bank Transactions 2
+            <NavLink class="nav-link" href="budget">
+                <span class="bi bi-graph-up-nav-menu" aria-hidden="true"></span> Budget
             </NavLink>
         </div>
     </nav>

@@ -10,7 +10,7 @@ namespace Models.DTOs
     {
         public int Id { get; set; }
         public int TypeId { get; set; }
-        public DateTime Date { get; set; }
+        public DateOnly Date { get; set; }
         public string? Description { get; set; }
         public double Amount { get; set; }
         public double Balance { get; set; }

@@ -86,7 +86,7 @@
         {
             Type = args.Item.Amount > 0 ? ModalType.Success : ModalType.Danger,
             Title = $"{args.Item.Date.ToString("dddd, MMMM dd, yyyy")} - {args.Item.Description}",
-            Message = $"${args.Item.Amount.ToString("N2")}"
+            Message = $"${args.Item.Amount.ToString("N2")}",
         });
     }
 

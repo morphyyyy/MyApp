@@ -1,0 +1,90 @@
+﻿@page "/budget"
+@using FrontEnd.Services.Contracts;
+@using Models.DTOs
+@using System.Drawing
+@inject ITransactionService TransactionService
+
+<h3>Budget</h3>
+
+<LineChart @ref="projection" />
+
+@code {
+    private LineChart projection = default!;
+    private List<TransactionDTO> Transactions { get; set; } = new List<TransactionDTO>();
+    private Color PaleGreen = Color.FromName("PaleGreen");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RenderProjectionAsync();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task RenderProjectionAsync()
+    {
+        Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ToList();
+        TransactionDTO lastPaycheck = Transactions.First(t => t.Description == "Paycheck");
+        double? balance = Transactions.First().Balance;
+        Transactions.AddRange(Enumerable.Range(1, 27)
+                                        .Select(i => new TransactionDTO { 
+                                                            Date = lastPaycheck.Date.AddDays(i * 14), 
+                                                            Amount = lastPaycheck.Amount, 
+                                                            Description = "Projected Paycheck" }
+                                        ));
+        double expenses = Math.Round(Transactions.Where(t => t.Date.Month == DateTime.Now.AddMonths(-1).Month && t.Date.Year == DateTime.Now.Year && t.Amount < 0).Sum(t => t.Amount), 0);
+        Transactions.AddRange(Enumerable.Range(1, 12)
+                                        .Select(i => new TransactionDTO { 
+                                                            Date = lastPaycheck.Date.AddMonths(i), 
+                                                            Amount = expenses, 
+                                                            Description = "Projected Expenses" }
+                                        ));
+        List<double?> forecasts = Enumerable.Range(1, 12).Select(i =>
+                                    Transactions.Where(t => t.Date.Month == DateTime.Now.AddMonths(i).Month && t.Date.Year == DateTime.Now.AddMonths(i).Year).Sum(t => t.Amount)
+                                 ).Cast<double?>().ToList();
+        for (int i = forecasts.Count(); i > 0; i--)
+        {
+            double? sum = forecasts.GetRange(0, i).Sum();
+            forecasts[i - 1] = sum + balance;
+        }
+        var data = new ChartData
+        {
+            Labels = Enumerable.Range(1, 12)
+                .Select(i => new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(i).ToString("MMMM"))
+                .ToList(),
+            Datasets = new List<IChartDataset>()
+            {
+                new LineChartDataset()
+                {
+                    Label = "Balance",
+                    Data = forecasts,
+                    BackgroundColor = $"rgb({PaleGreen.R}, {PaleGreen.G}, {PaleGreen.B})",
+                    BorderColor = $"rgb({PaleGreen.R}, {PaleGreen.G}, {PaleGreen.B})",
+                    BorderWidth = 2,
+                    HoverBorderWidth = 4,
+                    //PointBackgroundColor = "rgb(88, 80, 141)",
+                    //PointBorderColor = "rgb(88, 80, 141)",
+                    //PointRadius = 0, // hide points
+                    //PointHoverRadius = 4,
+                },
+            }
+        };
+
+        var options = new LineChartOptions();
+
+        options.Interaction.Mode = InteractionMode.Index;
+
+        options.Plugins.Title!.Text = "Budget";
+        options.Plugins.Title.Display = true;
+        options.Plugins.Title.Font = new ChartFont { Size = 20 };
+
+        options.Responsive = true;
+
+        options.Scales.X!.Title = new ChartAxesTitle { Text = "Month", Display = true };
+        options.Scales.Y!.Title = new ChartAxesTitle { Text = "Total", Display = true };
+
+        await projection.InitializeAsync(data, options);
+    }
+}
