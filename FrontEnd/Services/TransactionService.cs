@@ -22,7 +22,14 @@ namespace FrontEnd.Services
 
         public async Task<TransactionDTO> Create(TransactionDTO transactionDTO)
         {
-            var response = await _httpClient.PostAsJsonAsync($"/api/Transaction", transactionDTO);
+            var response = await _httpClient.PostAsJsonAsync($"/api/Transaction/Create", transactionDTO);
+
+            return await response.Content.ReadFromJsonAsync<TransactionDTO>();
+        }
+
+        public async Task<TransactionDTO> Update(TransactionDTO transactionDTO)
+        {
+            var response = await _httpClient.PutAsJsonAsync($"/api/Transaction/Update", transactionDTO);
 
             return await response.Content.ReadFromJsonAsync<TransactionDTO>();
         }

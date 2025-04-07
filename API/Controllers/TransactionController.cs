@@ -58,7 +58,7 @@ namespace API.Controllers
             }
         }
 
-        [HttpPost]
+        [HttpPost("Create")]
         public async Task<ActionResult<TransactionDTO>> Create(TransactionDTO transactionDTO)
         {
             try
@@ -92,5 +92,42 @@ namespace API.Controllers
                 throw;
             }
         }
+
+        [HttpPut("Update")]
+        public async Task<ActionResult<TransactionDTO>> Update(TransactionDTO transactionDTO)
+        {
+            try
+            {
+                Transaction transaction = new Transaction
+                {
+                    Id = transactionDTO.Id,
+                    Date = transactionDTO.Date,
+                    Description = transactionDTO.Description,
+                    Amount = transactionDTO.Amount,
+                    Balance = transactionDTO.Balance,
+                    UpdatedDate = DateTime.Now
+                };
+
+                transaction = await _transactionRepository.Update(transaction);
+
+                transactionDTO.Id = transaction.Id;
+                transactionDTO.Date = transaction.Date;
+                transactionDTO.Description = transaction.Description;
+                transactionDTO.Amount = transaction.Amount;
+                transactionDTO.Balance = transaction.Balance;
+                transactionDTO.CreatedDate = transaction.CreatedDate;
+                transactionDTO.UpdatedDate = transaction.UpdatedDate;
+                transactionDTO.DeletedDate = transaction.DeletedDate;
+
+                return Ok(transactionDTO);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                throw;
+            }
+        }
+
     }
 }

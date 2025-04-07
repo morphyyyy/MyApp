@@ -7,5 +7,6 @@ namespace API.Repositories.Contracts
     {
         Task<IEnumerable<Transaction>> List();
         Task<Transaction> Create(Transaction transaction);
+        Task<Transaction> Update(Transaction transaction);
     }
 }

@@ -6,6 +6,7 @@ namespace FrontEnd.Services.Contracts
     {
         Task<List<TransactionDTO>> List();
         Task<TransactionDTO> Create(TransactionDTO transactionDTO);
+        Task<TransactionDTO> Update(TransactionDTO transactionDTO);
         Task<TransactionDTO> Delete(int id);
     }
 }

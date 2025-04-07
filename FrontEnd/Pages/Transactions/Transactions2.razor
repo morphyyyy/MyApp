@@ -1,31 +1,67 @@
 ﻿@page "/transactions2"
 @using FrontEnd.Services.Contracts;
 @using Models.DTOs
+@using System.Drawing
 @inherits TransactionsBase
 @inject ITransactionService TransactionService
 
 <div class="row m-3">
     <div class="col-12">
         <h3 class="float-start">Transactions</h3>
-        <button class="float-end btn btn-success"><i class="bi bi-plus-circle" @onclick="@(() => Create(newTransactionDTO))"></i> Add Transaction</button>
+        <button class="float-end btn btn-success" @onclick="() => showNewTransactionModal = true"><i class="bi bi-plus-circle"></i> Add Transaction</button>
+    </div>
+</div>
+
+<div class="row m-3">
+    <div class="row">
+        <div class="col-6">
+            <div class="row justify-content-center">
+                <div class="col-3">
+                    <label for="monthlyStartDate">Start Date:</label>
+                    <InputDate @bind-Value="monthlyStartDate" @bind-Value:after="() => RenderLastMonthTransactions()" />
+                </div>
+                <div class="col-3">
+                    <label for="monthlyEndDate">End Date:</label>
+                    <InputDate @bind-Value="monthlyEndDate" @bind-Value:after="() => RenderLastMonthTransactions()" />
+                </div>
+            </div>
+            <div class="row">
+                <BarChart @ref="monthlyTransactionsByRangeChart" />
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="row justify-content-center">
+                <div class="col-3">
+                    <label for="projectedStartDate">Start Date:</label>
+                    <InputDate @bind-Value="projectedStartDate" @bind-Value:after="() => RenderProjectedMonthlyBalanceByRange()" />
+                </div>
+                <div class="col-3">
+                    <label for="projectedEndDate">End Date:</label>
+                    <InputDate @bind-Value="projectedEndDate" @bind-Value:after="() => RenderProjectedMonthlyBalanceByRange()" />
+                </div>
+            </div>
+            <div class="row">
+                <LineChart @ref="projectedMonthlyBalanceByRangeChart" />
+            </div>
+        </div>
     </div>
 </div>
 
 <Grid TItem="TransactionDTO"
-    Class="table table-hover table-bordered table-striped"
-    Style="--bs-table-hover-bg: PaleGreen; --bb-table-selected-row-background-color: LightGreen;"
-    DataProvider="TransactionsDataProvider"
-    AllowSelection="true"
-    SelectionMode="GridSelectionMode.Multiple"
-    AllowFiltering="true"
-    AllowSorting="true"
-    AllowPaging="true"
-    PageSize="15"
-    HeaderRowCssClass="bg-success text-white border-bottom-0"
-    FiltersRowCssClass="bg-success text-white bg-opacity-25 border-bottom-0"
-    Responsive="true"
-    AllowRowClick="true"
-    OnRowClick="OnRowClick">
+Class="table table-hover table-bordered table-striped"
+Style="--bs-table-hover-bg: PaleGreen; --bb-table-selected-row-background-color: LightGreen;"
+DataProvider="TransactionsDataProvider"
+AllowSelection="true"
+SelectionMode="GridSelectionMode.Multiple"
+AllowFiltering="true"
+AllowSorting="true"
+AllowPaging="true"
+PageSize="15"
+HeaderRowCssClass="bg-success text-white border-bottom-0"
+FiltersRowCssClass="bg-success text-white bg-opacity-25 border-bottom-0"
+Responsive="true"
+AllowRowClick="true"
+OnRowClick="OnRowClick">
 
     <GridColumns>
         <GridColumn TItem="TransactionDTO" 
@@ -67,15 +103,157 @@
 
 </Grid>
 
+<div class="modal @(showNewTransactionModal ? "fade show" : "")" tabindex="-1" role="dialog" style="display:@(showNewTransactionModal ? "block" : "none");">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Transaction</h5>
+            </div>
+            <EditForm Model="newTransactionDTO" OnValidSubmit="@(() => { Create(newTransactionDTO); showNewTransactionModal = false; StateHasChanged();})">
+                <div class="modal-body m-5 justify-content-center">
+                    <div class="row">
+                        <label for="newTransactionDTO.Date">Date</label>
+                        <InputDate @bind-Value="newTransactionDTO.Date" />
+                    </div>
+                    <div class="row">
+                        <label for="newTransactionDTO.Description">Description</label>
+                        <InputText @bind-Value="newTransactionDTO.Description" />
+                    </div>
+                    <div class="row">
+                        <label for="newTransactionDTO.Amount">Amount</label>
+                        <InputNumber @bind-Value="newTransactionDTO.Amount" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="() => showNewTransactionModal = false">Close</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
 @code {
     [Inject] ModalService ModalService { get; set; } = default!;
 
-    private IEnumerable<TransactionDTO> Transactions = default!;
+    private BarChart monthlyTransactionsByRangeChart = default!;
+    private LineChart projectedMonthlyBalanceByRangeChart = default!;
+    private DateOnly monthlyStartDate { get; set; } = DateOnly.FromDateTime(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(-1));
+    private DateOnly monthlyEndDate { get; set; } = DateOnly.FromDateTime(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(-1));
+    private DateOnly projectedStartDate { get; set; } = DateOnly.FromDateTime(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1));
+    private DateOnly projectedEndDate { get; set; } = DateOnly.FromDateTime(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(12));
+    public bool showNewTransactionModal 
+    { 
+        get; 
+        set; 
+    } = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ThenByDescending(t => t.Id).ToList();
+        monthlyTransactionsByRange = GetMonthlyTransactionsByRange(
+            monthlyStartDate,
+            monthlyEndDate
+        );
+        projectedMonthlyBalanceByRange = GetProjectedMonthlyBalanceByRange(
+            projectedStartDate,
+            projectedEndDate
+        );
+
+        if (firstRender)
+        {
+            await RenderLastMonthTransactions();
+            await RenderProjectedMonthlyBalanceByRange();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task RenderLastMonthTransactions()
+    {
+        var data = new ChartData
+        {
+            Labels = GetMonthNamesInRange(monthlyStartDate, monthlyEndDate),
+            Datasets = new List<IChartDataset>()
+            {
+                new BarChartDataset()
+                {
+                    Label = monthlyTransactionsByRange.First().Key,
+                    Data = new List<double?>{ monthlyTransactionsByRange.First().Value },
+                    BackgroundColor = new List<string>{ "palevioletred" },
+                    CategoryPercentage = 0.8,
+                    BarPercentage = 0.1 * monthlyTransactionsByRange.Count(),
+                },
+                new BarChartDataset()
+                {
+                    Label = monthlyTransactionsByRange.Last().Key,
+                    Data = new List<double?>{ monthlyTransactionsByRange.Last().Value },
+                    BackgroundColor = new List<string> { "PaleGreen" },
+                    CategoryPercentage = 0.8,
+                    BarPercentage = 0.1 * monthlyTransactionsByRange.Count(),
+                }
+            }
+        };
+
+        var options = new BarChartOptions();
+
+        options.Interaction.Mode = InteractionMode.Index;
+
+        options.Plugins.Title!.Text = "Recent Transactions";
+        options.Plugins.Title.Display = true;
+        options.Plugins.Title.Font = new ChartFont { Size = 20 };
+
+        options.Responsive = true;
+
+        options.Scales.X!.Title = new ChartAxesTitle { Text = "Month", Display = true };
+        options.Scales.Y!.Title = new ChartAxesTitle { Text = "Total", Display = true };
+
+        await monthlyTransactionsByRangeChart.InitializeAsync(data, options);
+    }
+
+    private async Task RenderProjectedMonthlyBalanceByRange()
+    {
+        var data = new ChartData
+        {
+            Labels = projectedMonthlyBalanceByRange.Select(p => p.Key).ToList(),
+            Datasets = new List<IChartDataset>()
+        {
+            new LineChartDataset()
+            {
+                Label = "Balance",
+                Data = projectedMonthlyBalanceByRange.Select(p => p.Value).ToList(),
+                BackgroundColor = "PaleGreen",
+                BorderColor = "PaleGreen",
+                BorderWidth = 2,
+                HoverBorderWidth = 4,
+                //PointBackgroundColor = "rgb(88, 80, 141)",
+                //PointBorderColor = "rgb(88, 80, 141)",
+                //PointRadius = 0, // hide points
+                //PointHoverRadius = 4,
+            },
+        }
+    };
+
+        var options = new LineChartOptions();
+
+        options.Interaction.Mode = InteractionMode.Index;
+
+        options.Plugins.Title!.Text = "Projected Balance";
+        options.Plugins.Title.Display = true;
+        options.Plugins.Title.Font = new ChartFont { Size = 20 };
+
+        options.Responsive = true;
+
+        options.Scales.X!.Title = new ChartAxesTitle { Text = "Month", Display = true };
+        options.Scales.Y!.Title = new ChartAxesTitle { Text = "Total", Display = true };
+
+        await projectedMonthlyBalanceByRangeChart.InitializeAsync(data, options);
+    }
 
     private async Task<GridDataProviderResult<TransactionDTO>> TransactionsDataProvider(GridDataProviderRequest<TransactionDTO> request)
     {
-        if (Transactions is null)
-            Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ToList();
+        if (Transactions is null || !Transactions.Any())
+            Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ThenByDescending(t => t.Id).ToList();
 
         return await Task.FromResult(request.ApplyTo(Transactions));
     }

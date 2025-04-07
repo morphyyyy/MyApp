@@ -31,5 +31,21 @@ namespace API.Repositories
             return transaction;
         }
 
+        public async Task<Transaction> Update(Transaction transaction)
+        {
+            Transaction? oldData = _context.Transactions.Find(transaction.Id);
+            if (oldData != null)
+            {
+                oldData.Description = transaction.Description;
+                oldData.Balance = transaction.Balance;
+                oldData.Date = transaction.Date;
+                oldData.Amount = transaction.Amount;
+                oldData.UpdatedDate = transaction.UpdatedDate;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return transaction;
+        }
     }
 }

@@ -1,8 +1,19 @@
 ﻿@page "/transactions"
+@using FrontEnd.Pages.Shared
 @using Models.DTOs
 @inherits TransactionsBase
 
 <h3>Transactions</h3>
+
+<Table>
+	<Columns>
+		<Column Header="Date" />
+		<Column Header="Description" />
+		<Column class="text-end" Header="Amount" />
+		<Column class="text-end" Header="Balance" />
+		<Column class="text-center" Header="Actions" />
+	</Columns>
+</Table>
 
 @if (Transactions == null)
 {
@@ -10,17 +21,6 @@
 }
 else
 {
-	<table class="table">
-		<tbody>
-			<tr>
-				<td><InputDate @bind-Value="newTransactionDTO.Date"></InputDate></td>
-				<td><InputText @bind-Value="newTransactionDTO.Description"></InputText></td>
-				<td class="text-end"><InputNumber @bind-Value="newTransactionDTO.Amount" step="0.01"></InputNumber></td>
-				<td class="text-end"></td>
-				<td class="text-center"><i class="bi bi-plus-lg btn btn-success btn-sm rounded-circle" @onclick="@(() => Create(newTransactionDTO))"></i></td>
-			</tr>
-		</tbody>
-	</table>
 	<table id="transactionsTable" class="table table-striped sortable">
 		<thead>
 			<tr>
