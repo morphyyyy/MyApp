@@ -18,11 +18,11 @@
             <div class="row justify-content-center">
                 <div class="col-3">
                     <label for="monthlyStartDate">Start Date:</label>
-                    <InputDate @bind-Value="monthlyStartDate" @bind-Value:after="() => RenderLastMonthTransactions()" />
+                    <InputDate class="form-control" @bind-Value="monthlyStartDate" @bind-Value:after="() => RenderLastMonthTransactions()" />
                 </div>
                 <div class="col-3">
                     <label for="monthlyEndDate">End Date:</label>
-                    <InputDate @bind-Value="monthlyEndDate" @bind-Value:after="() => RenderLastMonthTransactions()" />
+                    <InputDate class="form-control" @bind-Value="monthlyEndDate" @bind-Value:after="() => RenderLastMonthTransactions()" />
                 </div>
             </div>
             <div class="row">
@@ -33,11 +33,11 @@
             <div class="row justify-content-center">
                 <div class="col-3">
                     <label for="projectedStartDate">Start Date:</label>
-                    <InputDate @bind-Value="projectedStartDate" @bind-Value:after="() => RenderProjectedMonthlyBalanceByRange()" />
+                    <InputDate class="form-control" @bind-Value="projectedStartDate" @bind-Value:after="() => RenderProjectedMonthlyBalanceByRange()" />
                 </div>
                 <div class="col-3">
                     <label for="projectedEndDate">End Date:</label>
-                    <InputDate @bind-Value="projectedEndDate" @bind-Value:after="() => RenderProjectedMonthlyBalanceByRange()" />
+                    <InputDate class="form-control" @bind-Value="projectedEndDate" @bind-Value:after="() => RenderProjectedMonthlyBalanceByRange()" />
                 </div>
             </div>
             <div class="row">
@@ -48,20 +48,20 @@
 </div>
 
 <Grid TItem="TransactionDTO"
-Class="table table-hover table-bordered table-striped"
-Style="--bs-table-hover-bg: PaleGreen; --bb-table-selected-row-background-color: LightGreen;"
-DataProvider="TransactionsDataProvider"
-AllowSelection="true"
-SelectionMode="GridSelectionMode.Multiple"
-AllowFiltering="true"
-AllowSorting="true"
-AllowPaging="true"
-PageSize="15"
-HeaderRowCssClass="bg-success text-white border-bottom-0"
-FiltersRowCssClass="bg-success text-white bg-opacity-25 border-bottom-0"
-Responsive="true"
-AllowRowClick="true"
-OnRowClick="OnRowClick">
+    Class="table table-hover table-bordered table-striped"
+    Style="--bs-table-hover-bg: PaleGreen; --bb-table-selected-row-background-color: LightGreen;"
+    DataProvider="TransactionsDataProvider"
+    AllowSelection="true"
+    SelectionMode="GridSelectionMode.Multiple"
+    AllowFiltering="true"
+    AllowSorting="true"
+    AllowPaging="true"
+    PageSize="15"
+    HeaderRowCssClass="bg-success text-white border-bottom-0"
+    FiltersRowCssClass="bg-success text-white bg-opacity-25 border-bottom-0"
+    Responsive="true"
+    AllowRowClick="true"
+    OnRowClick="OnRowClick">
 
     <GridColumns>
         <GridColumn TItem="TransactionDTO" 
@@ -103,30 +103,31 @@ OnRowClick="OnRowClick">
 
 </Grid>
 
-<div class="modal @(showNewTransactionModal ? "fade show" : "")" tabindex="-1" role="dialog" style="display:@(showNewTransactionModal ? "block" : "none");">
+<div class="blazor-modal @(showNewTransactionModal ? "show fade-in" : "")" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">New Transaction</h5>
+            <div class="modal-header px-4 py-3 d-flex justify-content-between align-items-center">
+                <h5 class="modal-title mb-0">New Transaction</h5>
+                <button type="button" class="btn-close" aria-label="Close" @onclick="() => showNewTransactionModal = false"></button>
             </div>
             <EditForm Model="newTransactionDTO" OnValidSubmit="@(() => { Create(newTransactionDTO); showNewTransactionModal = false; StateHasChanged();})">
-                <div class="modal-body m-5 justify-content-center">
-                    <div class="row">
-                        <label for="newTransactionDTO.Date">Date</label>
-                        <InputDate @bind-Value="newTransactionDTO.Date" />
+                <div class="modal-body m-4">
+                    <div class="mb-3">
+                        <label>Date</label>
+                        <InputDate class="form-control" @bind-Value="newTransactionDTO.Date" />
                     </div>
-                    <div class="row">
-                        <label for="newTransactionDTO.Description">Description</label>
-                        <InputText @bind-Value="newTransactionDTO.Description" />
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <InputText class="form-control" @bind-Value="newTransactionDTO.Description" />
                     </div>
-                    <div class="row">
-                        <label for="newTransactionDTO.Amount">Amount</label>
-                        <InputNumber @bind-Value="newTransactionDTO.Amount" />
+                    <div class="mb-3">
+                        <label>Amount</label>
+                        <InputNumber class="form-control" @bind-Value="newTransactionDTO.Amount" />
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer px-4 py-3">
+                    <button type="button" class="btn btn-secondary me-2" @onclick="() => showNewTransactionModal = false">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save</button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="() => showNewTransactionModal = false">Close</button>
                 </div>
             </EditForm>
         </div>
