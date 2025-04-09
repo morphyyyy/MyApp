@@ -4,6 +4,8 @@
 @using System.Drawing
 @inherits TransactionsBase
 @inject ITransactionService TransactionService
+@using FrontEnd.Services
+@inject FrontEnd.Services.ToastService ToastService
 
 <div class="row m-3">
     <div class="col-12">
@@ -87,7 +89,7 @@
         PropertyName="Amount"
         SortKeySelector="item => item.Amount"
         ColumnClass="@(item => item.Amount > 0 ? "text-success" : "text-danger")">
-            $@context.Amount.ToString("N2")
+            @context.Amount.ToString("C")
         </GridColumn>
 
         <GridColumn TItem="TransactionDTO" 
@@ -96,7 +98,7 @@
         TextAlignment="Alignment.End" 
         PropertyName="Balance"
         SortKeySelector="item => item.Balance">
-            $@context.Balance.ToString("N2")
+            @context.Balance.ToString("C")
         </GridColumn>
 
     </GridColumns>
@@ -106,7 +108,7 @@
 <div class="blazor-modal @(showNewTransactionModal ? "show fade-in" : "")" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header px-4 py-3 d-flex justify-content-between align-items-center">
+            <div class="modal-header px-4 py-3 bg-success bg-opacity-50 d-flex justify-content-between align-items-center">
                 <h5 class="modal-title mb-0">New Transaction</h5>
                 <button type="button" class="btn-close" aria-label="Close" @onclick="() => showNewTransactionModal = false"></button>
             </div>
@@ -261,12 +263,14 @@
 
     private async Task OnRowClick(GridRowEventArgs<TransactionDTO> args)
     {
-        await ModalService.ShowAsync(new ModalOption
-        {
-            Type = args.Item.Amount > 0 ? ModalType.Success : ModalType.Danger,
-            Title = $"{args.Item.Date.ToString("dddd, MMMM dd, yyyy")} - {args.Item.Description}",
-            Message = $"${args.Item.Amount.ToString("N2")}",
-        });
+        // await ModalService.ShowAsync(new ModalOption
+        // {
+        //     Type = args.Item.Amount > 0 ? ModalType.Success : ModalType.Danger,
+        //     Title = $"{args.Item.Date.ToString("dddd, MMMM dd, yyyy")} - {args.Item.Description}",
+        //     Message = $"${args.Item.Amount.ToString("N2")}",
+        // });
+
+        ToastService.ShowToast($"{args.Item.Description} {args.Item.Date}", $"{args.Item.Amount.ToString("C")}", args.Item.Amount > 0 ? ToastLevel.Success : ToastLevel.Danger);
     }
 
 }

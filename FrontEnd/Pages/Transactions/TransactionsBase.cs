@@ -1,4 +1,5 @@
 ﻿using BlazorBootstrap;
+using FrontEnd.Services;
 using FrontEnd.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Models.DTOs;
@@ -11,6 +12,8 @@ namespace FrontEnd.Pages.Transactions
     {
         [Inject]
         ITransactionService TransactionService { get; set; }
+        [Inject]
+        Services.ToastService ToastService { get; set; }
         public List<TransactionDTO> Transactions { get; set; } = new List<TransactionDTO>();
         public List<KeyValuePair<string, double?>> monthlyTransactionsByRange;
         public List<KeyValuePair<string, double?>> projectedMonthlyBalanceByRange;
@@ -135,6 +138,8 @@ namespace FrontEnd.Pages.Transactions
             }
             Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ThenByDescending(t => t.Id).ToList();
             newTransactionDTO = new TransactionDTO { Date = DateOnly.FromDateTime(DateTime.Now) };
+
+            ToastService.ShowToast("Success", "Transaction Added!", ToastLevel.Success);
         }
 
         public async void Delete(int Id)

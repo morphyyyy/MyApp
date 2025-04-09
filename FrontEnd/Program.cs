@@ -9,6 +9,7 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7149") });
+builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddBlazorBootstrap();
 

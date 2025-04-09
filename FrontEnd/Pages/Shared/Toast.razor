@@ -1,0 +1,63 @@
+﻿@using FrontEnd.Services
+@inject FrontEnd.Services.ToastService ToastService
+
+<ul class="toast-list">
+    @foreach (var toast in Toasts)
+    {
+        <li class="toast show fade" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-@toast.Level.ToString().ToLower() bg-opacity-50">
+                <strong class="me-auto">@toast.Title</strong>
+                @* <small class="text-muted">@DateTime.Now</small> *@
+                <button type="button" class="btn-close fs-6" @onclick="() => RemoveToast(toast)" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                @toast.Message
+            </div>
+            <div class="toast-timer border-bottom border-@toast.Level.ToString().ToLower()"></div>
+        </li>
+    }
+</ul>
+
+@code {
+    private List<ToastInstance> Toasts = new();
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnShow += ShowToast;
+    }
+
+    private void ShowToast(string title, string message, ToastLevel level)
+    {
+        var toast = new ToastInstance
+        {
+            Title = title,
+            Message = message,
+            Level = level
+        };
+
+        if (Toasts.Count() > 5)
+        {
+            Toasts.Remove(Toasts.First());
+        }
+        Toasts.Add(toast);
+        StateHasChanged();
+
+        _ = Task.Delay(6000).ContinueWith(_ =>
+        {
+            RemoveToast(toast);
+        });
+    }
+
+    private void RemoveToast(ToastInstance toast)
+    {
+        Toasts.Remove(toast);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private class ToastInstance
+    {
+        public string Title { get; set; }
+        public string Message { get; set; }
+        public ToastLevel Level { get; set; }
+    }
+}
