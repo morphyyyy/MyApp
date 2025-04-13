@@ -129,5 +129,10 @@ namespace API.Controllers
             }
         }
 
+        [HttpDelete("Delete/{id}")]
+        public async Task<int> Delete(int id)
+        {
+            return await _transactionRepository.Delete(id);
+        }
     }
 }

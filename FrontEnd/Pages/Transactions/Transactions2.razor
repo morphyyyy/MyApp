@@ -1,4 +1,5 @@
 ﻿@page "/transactions2"
+@using FrontEnd.Pages.Shared
 @using FrontEnd.Services.Contracts;
 @using Models.DTOs
 @using System.Drawing
@@ -27,9 +28,7 @@
                     <InputDate class="form-control" @bind-Value="monthlyEndDate" @bind-Value:after="() => RenderLastMonthTransactions()" />
                 </div>
             </div>
-            <div class="row">
-                <BarChart @ref="monthlyTransactionsByRangeChart" />
-            </div>
+            <BarChart @ref="monthlyTransactionsByRangeChart" />
         </div>
         <div class="col-6">
             <div class="row justify-content-center">
@@ -42,28 +41,26 @@
                     <InputDate class="form-control" @bind-Value="projectedEndDate" @bind-Value:after="() => RenderProjectedMonthlyBalanceByRange()" />
                 </div>
             </div>
-            <div class="row">
-                <LineChart @ref="projectedMonthlyBalanceByRangeChart" />
-            </div>
+            <LineChart @ref="projectedMonthlyBalanceByRangeChart" />
         </div>
     </div>
 </div>
 
-<Grid TItem="TransactionDTO"
-    Class="table table-hover table-bordered table-striped"
-    Style="--bs-table-hover-bg: PaleGreen; --bb-table-selected-row-background-color: LightGreen;"
-    DataProvider="TransactionsDataProvider"
-    AllowSelection="true"
-    SelectionMode="GridSelectionMode.Multiple"
-    AllowFiltering="true"
-    AllowSorting="true"
-    AllowPaging="true"
-    PageSize="15"
-    HeaderRowCssClass="bg-success text-white border-bottom-0"
-    FiltersRowCssClass="bg-success text-white bg-opacity-25 border-bottom-0"
-    Responsive="true"
-    AllowRowClick="true"
-    OnRowClick="OnRowClick">
+<Grid @ref="gridRef"
+TItem="TransactionDTO"
+Class="table table-hover table-bordered table-striped"
+Style="--bs-table-hover-bg: PaleGreen; --bb-table-selected-row-background-color: LightGreen;"
+DataProvider="TransactionsDataProvider"
+AllowSelection="true"
+SelectionMode="GridSelectionMode.Multiple"
+AllowFiltering="true"
+AllowSorting="true"
+AllowPaging="true"
+PageSize="15"
+HeaderRowCssClass="bg-success text-white border-bottom-0"
+FiltersRowCssClass="bg-success text-white bg-opacity-25 border-bottom-0"
+Responsive="true"
+AllowRowClick="true">
 
     <GridColumns>
         <GridColumn TItem="TransactionDTO" 
@@ -101,6 +98,13 @@
             @context.Balance.ToString("C")
         </GridColumn>
 
+        <GridColumn TItem="TransactionDTO" HeaderText="Action" HeaderTextAlignment="Alignment.Center" Filterable="false">
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-2">
+                @* <Button Color="ButtonColor.Primary" Size="ButtonSize.Small" @onclick="async () => await Edit(context)"> Edit </Button> *@
+                <Button Color="ButtonColor.Danger" Size="ButtonSize.Small" @onclick="async () => await DeleteTransactionAsync(context.Id)"> Delete </Button>
+            </div>
+        </GridColumn>
+
     </GridColumns>
 
 </Grid>
@@ -112,7 +116,7 @@
                 <h5 class="modal-title mb-0">New Transaction</h5>
                 <button type="button" class="btn-close" aria-label="Close" @onclick="() => showNewTransactionModal = false"></button>
             </div>
-            <EditForm Model="newTransactionDTO" OnValidSubmit="@(() => { Create(newTransactionDTO); showNewTransactionModal = false; StateHasChanged();})">
+            <EditForm Model="newTransactionDTO" OnValidSubmit="@(() => AddTransactionAsync(newTransactionDTO))">
                 <div class="modal-body m-4">
                     <div class="mb-3">
                         <label>Date</label>
@@ -136,9 +140,10 @@
     </div>
 </div>
 
-@code {
-    [Inject] ModalService ModalService { get; set; } = default!;
+<ConfirmModal @ref="confirmModal" />
 
+@code {
+    private BlazorBootstrap.Grid<TransactionDTO> gridRef = default!;
     private BarChart monthlyTransactionsByRangeChart = default!;
     private LineChart projectedMonthlyBalanceByRangeChart = default!;
     private DateOnly monthlyStartDate { get; set; } = DateOnly.FromDateTime(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(-1));
@@ -150,6 +155,7 @@
         get; 
         set; 
     } = false;
+    private ConfirmModal confirmModal = default!;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -255,22 +261,30 @@
 
     private async Task<GridDataProviderResult<TransactionDTO>> TransactionsDataProvider(GridDataProviderRequest<TransactionDTO> request)
     {
-        if (Transactions is null || !Transactions.Any())
-            Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ThenByDescending(t => t.Id).ToList();
+        Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ThenByDescending(t => t.Id).ToList();
 
         return await Task.FromResult(request.ApplyTo(Transactions));
     }
 
-    private async Task OnRowClick(GridRowEventArgs<TransactionDTO> args)
+    private async Task AddTransactionAsync(TransactionDTO newTransaction)
     {
-        // await ModalService.ShowAsync(new ModalOption
-        // {
-        //     Type = args.Item.Amount > 0 ? ModalType.Success : ModalType.Danger,
-        //     Title = $"{args.Item.Date.ToString("dddd, MMMM dd, yyyy")} - {args.Item.Description}",
-        //     Message = $"${args.Item.Amount.ToString("N2")}",
-        // });
-
-        ToastService.ShowToast($"{args.Item.Description} {args.Item.Date}", $"{args.Item.Amount.ToString("C")}", args.Item.Amount > 0 ? ToastLevel.Success : ToastLevel.Danger);
+        await Create(newTransactionDTO);
+        showNewTransactionModal = false;
+        await gridRef.RefreshDataAsync();
     }
 
+    private async Task DeleteTransactionAsync(int id)
+    {
+        var confirmed = await confirmModal.ShowAsync(
+            title: "Delete Transaction!",
+            message: "Are you sure you want to delete this Transaction?",
+            type: ConfirmModal.ConfirmType.Danger
+        );
+
+        if (confirmed)
+        {
+            await Delete(id);
+            await gridRef.RefreshDataAsync();
+        }
+    }
 }

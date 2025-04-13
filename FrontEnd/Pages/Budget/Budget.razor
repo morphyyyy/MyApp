@@ -8,50 +8,56 @@
 
 <h3>Budget</h3>
 
-<LineChart @ref="projection" />
+<LineChart @ref="projectedMonthlyBalanceByRangeChart" />
 
 @code {
-    private LineChart projection = default!;
+    private LineChart projectedMonthlyBalanceByRangeChart = default!;
     private Color PaleGreen = Color.FromName("PaleGreen");
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ThenByDescending(t => t.Id).ToList();
+        projectedMonthlyBalanceByRange = GetProjectedMonthlyBalanceByRange(
+            DateOnly.FromDateTime(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1)),
+            DateOnly.FromDateTime(new DateTime(DateTime.Now.AddYears(1).Year, DateTime.Now.Month, 1))
+        );
+
         if (firstRender)
         {
-            await RenderProjectionAsync();
+            await RenderProjectedMonthlyBalanceByRange();
         }
 
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    private async Task RenderProjectionAsync()
+    private async Task RenderProjectedMonthlyBalanceByRange()
     {
         var data = new ChartData
+        {
+            Labels = projectedMonthlyBalanceByRange.Select(p => p.Key).ToList(),
+            Datasets = new List<IChartDataset>()
+        {
+            new LineChartDataset()
             {
-                Labels = projectedMonthlyBalanceByRange.Select(p => p.Key).ToList(),
-                Datasets = new List<IChartDataset>()
-            {
-                new LineChartDataset()
-                {
-                    Label = "Balance",
-                    Data = projectedMonthlyBalanceByRange.Select(p => p.Value).ToList(),
-                    BackgroundColor = $"rgb({PaleGreen.R}, {PaleGreen.G}, {PaleGreen.B})",
-                    BorderColor = $"rgb({PaleGreen.R}, {PaleGreen.G}, {PaleGreen.B})",
-                    BorderWidth = 2,
-                    HoverBorderWidth = 4,
-                    //PointBackgroundColor = "rgb(88, 80, 141)",
-                    //PointBorderColor = "rgb(88, 80, 141)",
-                    //PointRadius = 0, // hide points
-                    //PointHoverRadius = 4,
-                },
-            }
-        };
+                Label = "Balance",
+                Data = projectedMonthlyBalanceByRange.Select(p => p.Value).ToList(),
+                BackgroundColor = "PaleGreen",
+                BorderColor = "PaleGreen",
+                BorderWidth = 2,
+                HoverBorderWidth = 4,
+                //PointBackgroundColor = "rgb(88, 80, 141)",
+                //PointBorderColor = "rgb(88, 80, 141)",
+                //PointRadius = 0, // hide points
+                //PointHoverRadius = 4,
+            },
+        }
+    };
 
         var options = new LineChartOptions();
 
         options.Interaction.Mode = InteractionMode.Index;
 
-        options.Plugins.Title!.Text = "Budget";
+        options.Plugins.Title!.Text = "Projected Balance";
         options.Plugins.Title.Display = true;
         options.Plugins.Title.Font = new ChartFont { Size = 20 };
 
@@ -60,6 +66,6 @@
         options.Scales.X!.Title = new ChartAxesTitle { Text = "Month", Display = true };
         options.Scales.Y!.Title = new ChartAxesTitle { Text = "Total", Display = true };
 
-        await projection.InitializeAsync(data, options);
+        await projectedMonthlyBalanceByRangeChart.InitializeAsync(data, options);
     }
 }

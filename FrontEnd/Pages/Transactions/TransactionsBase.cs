@@ -122,7 +122,7 @@ namespace FrontEnd.Pages.Transactions
             return monthNames;
         }
 
-        public async void Create(TransactionDTO transactionDTO)
+        public async Task Create(TransactionDTO transactionDTO)
         {
             newTransactionDTO.Balance = Transactions.Where(t => t.Date <= newTransactionDTO.Date).First().Balance + newTransactionDTO.Amount;
             newTransactionDTO.CreatedDate = DateTime.Now;
@@ -142,11 +142,12 @@ namespace FrontEnd.Pages.Transactions
             ToastService.ShowToast("Success", "Transaction Added!", ToastLevel.Success);
         }
 
-        public async void Delete(int Id)
+        public async Task Delete(int Id)
         {
             await TransactionService.Delete(Id);
             Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ThenByDescending(t => t.Id).ToList();
-        }
 
+            ToastService.ShowToast("Success", "Transaction Deleted!", ToastLevel.Success);
+        }
     }
 }

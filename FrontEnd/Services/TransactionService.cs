@@ -34,11 +34,11 @@ namespace FrontEnd.Services
             return await response.Content.ReadFromJsonAsync<TransactionDTO>();
         }
 
-        public async Task<TransactionDTO> Delete(int id)
+        public async Task<int> Delete(int id)
         {
-            var response = await _httpClient.DeleteAsync($"/api/Transaction/{id}");
+            var response = await _httpClient.DeleteAsync($"/api/Transaction/Delete/{id}");
 
-            return await response.Content.ReadFromJsonAsync<TransactionDTO>();
+            return await response.Content.ReadFromJsonAsync<int>();
         }
 
     }

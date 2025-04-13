@@ -47,5 +47,15 @@ namespace API.Repositories
 
             return transaction;
         }
+
+        public async Task<int> Delete(int id)
+        {
+            var transaction = await _context.Transactions.FindAsync(id);
+            if (transaction == null)
+                return 0;
+
+            _context.Transactions.Remove(transaction);
+            return await _context.SaveChangesAsync();
+        }
     }
 }
