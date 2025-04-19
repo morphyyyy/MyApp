@@ -194,6 +194,8 @@ AllowRowClick="true">
 
             await RenderTransactionReport();
             await RenderProjectedMonthlyBalanceByRange();
+
+            StateHasChanged();
         }
 
         await base.OnAfterRenderAsync(firstRender);
