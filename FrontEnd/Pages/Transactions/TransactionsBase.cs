@@ -3,6 +3,7 @@ using FrontEnd.Services;
 using FrontEnd.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Models.DTOs;
+using System;
 using System.Drawing;
 using System.Linq;
 
@@ -16,6 +17,7 @@ namespace FrontEnd.Pages.Transactions
         Services.ToastService ToastService { get; set; }
         public List<TransactionDTO> Transactions { get; set; } = new List<TransactionDTO>();
         public List<KeyValuePair<string, double?>> monthlyTransactionsByRange;
+        public List<KeyValuePair<string, double?>> transactionReport;
         public List<KeyValuePair<string, double?>> projectedMonthlyBalanceByRange;
         public TransactionDTO newTransactionDTO = new TransactionDTO { Date = DateOnly.FromDateTime(DateTime.Now) };
 
@@ -39,6 +41,23 @@ namespace FrontEnd.Pages.Transactions
             };
 
             return transactionsByRange;
+        }
+
+        public List<KeyValuePair<string, double?>> GetTransactionReport(DateOnly startDate, DateOnly endDate)
+        {
+            List<TransactionDTO> filtered = Transactions.Where(t => t.Date >= startDate && t.Date <= endDate).ToList();
+            List<string> types = filtered.DistinctBy(t => t.Description!).Select(t => t.Description!).ToList();
+
+            List<KeyValuePair<string, double?>> transactionReport = types.Select(type =>
+            {
+                var sum = filtered
+                    .Where(n => n.Description == type)
+                    .Sum(n => n.Amount);
+
+                return new KeyValuePair<string, double?>(type, Math.Round(sum, 0));
+            }).OrderByDescending(t => t.Value).ToList();
+
+            return transactionReport;
         }
 
         public List<KeyValuePair<string, double?>> GetProjectedMonthlyBalanceByRange(DateOnly startDate, DateOnly endDate)

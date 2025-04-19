@@ -9,39 +9,66 @@
 @inject FrontEnd.Services.ToastService ToastService
 
 <div class="row m-3">
-    <div class="col-12">
-        <h3 class="float-start">Transactions</h3>
-        <button class="float-end btn btn-success" @onclick="() => showNewTransactionModal = true"><i class="bi bi-plus-circle"></i> Add Transaction</button>
+    <div class="d-flex justify-content-between align-items-center w-100">
+        <h3 class="m-0">Transactions</h3>
+        <h4 class="m-0 text-center flex-grow-1">
+            Current Balance:
+            <span class="fw-bold" style="color: mediumseagreen; text-shadow: 1px 1px 1px black, -1px -1px 1px palegreen;">
+                @(currentBalance)
+            </span>
+        </h4>
+        <button class="btn btn-success pt-1 pb-0 ps-1 pe-2 ms-3" @onclick="() => showNewTransactionModal = true">
+            <i class="bi bi-plus" style="font-size: 1.5rem; vertical-align: middle;"></i> New Transaction
+        </button>
     </div>
 </div>
 
-<div class="row m-3">
-    <div class="row">
-        <div class="col-6">
-            <div class="row justify-content-center">
-                <div class="col-3">
-                    <label for="monthlyStartDate">Start Date:</label>
-                    <InputDate class="form-control" @bind-Value="monthlyStartDate" @bind-Value:after="() => RenderLastMonthTransactions()" />
-                </div>
-                <div class="col-3">
-                    <label for="monthlyEndDate">End Date:</label>
-                    <InputDate class="form-control" @bind-Value="monthlyEndDate" @bind-Value:after="() => RenderLastMonthTransactions()" />
-                </div>
+<div class="d-flex justify-content-between m-3 gap-4 align-items-stretch">
+    <div style="flex: 1;" class="d-flex flex-column">
+        <h4 class="d-flex justify-content-center gap-3 mb-2 fw-bold">
+            Recent Transactions
+        </h4>
+        <div class="d-flex justify-content-center gap-3 mb-2">
+            <div>
+                <InputDate id="monthlyStartDate" class="form-control"
+                @bind-Value="monthlyStartDate"
+                @bind-Value:after="async () => await InvokeAsync(RenderTransactionReport)" />
             </div>
-            <BarChart @ref="monthlyTransactionsByRangeChart" />
+            <div class="mt-2">
+                to
+            </div>
+            <div>
+                <InputDate id="monthlyEndDate" class="form-control"
+                @bind-Value="monthlyEndDate"
+                @bind-Value:after="async () => await InvokeAsync(RenderTransactionReport)" />
+            </div>
         </div>
-        <div class="col-6">
-            <div class="row justify-content-center">
-                <div class="col-3">
-                    <label for="projectedStartDate">Start Date:</label>
-                    <InputDate class="form-control" @bind-Value="projectedStartDate" @bind-Value:after="() => RenderProjectedMonthlyBalanceByRange()" />
-                </div>
-                <div class="col-3">
-                    <label for="projectedEndDate">End Date:</label>
-                    <InputDate class="form-control" @bind-Value="projectedEndDate" @bind-Value:after="() => RenderProjectedMonthlyBalanceByRange()" />
-                </div>
+        <div class="flex-grow-1">
+            <PieChart @ref="transactionReportChart" class="w-100 h-100" />
+        </div>
+    </div>
+
+    <div style="flex: 1;" class="d-flex flex-column">
+        <h4 class="d-flex justify-content-center gap-3 mb-2 fw-bold">
+            Projected Balance
+        </h4>
+        <div class="d-flex justify-content-center gap-3 mb-2">
+            <div>
+                <InputDate id="projectedStartDate" class="form-control"
+                @bind-Value="projectedStartDate"
+                @bind-Value:after="async () => await InvokeAsync(RenderProjectedMonthlyBalanceByRange)" />
             </div>
-            <LineChart @ref="projectedMonthlyBalanceByRangeChart" />
+            <div class="mt-2">
+                to
+            </div>
+            <div>
+                <InputDate id="projectedEndDate" class="form-control"
+                @bind-Value="projectedEndDate"
+                @bind-Value:after="async () => await InvokeAsync(RenderProjectedMonthlyBalanceByRange)" />
+            </div>
+        </div>
+        <div class="flex-grow-1 d-flex justify-content-center" style="padding-top: 8em; padding-bottom: 8em;">
+            <LineChart @ref="projectedMonthlyBalanceByRangeChart" class="w-100 h-100" />
         </div>
     </div>
 </div>
@@ -143,8 +170,9 @@ AllowRowClick="true">
 <ConfirmModal @ref="confirmModal" />
 
 @code {
+    private string currentBalance { get; set; } = null!;
     private BlazorBootstrap.Grid<TransactionDTO> gridRef = default!;
-    private BarChart monthlyTransactionsByRangeChart = default!;
+    private PieChart transactionReportChart = default!;
     private LineChart projectedMonthlyBalanceByRangeChart = default!;
     private DateOnly monthlyStartDate { get; set; } = DateOnly.FromDateTime(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(-1));
     private DateOnly monthlyEndDate { get; set; } = DateOnly.FromDateTime(new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddDays(-1));
@@ -159,69 +187,65 @@ AllowRowClick="true">
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ThenByDescending(t => t.Id).ToList();
-        monthlyTransactionsByRange = GetMonthlyTransactionsByRange(
-            monthlyStartDate,
-            monthlyEndDate
-        );
-        projectedMonthlyBalanceByRange = GetProjectedMonthlyBalanceByRange(
-            projectedStartDate,
-            projectedEndDate
-        );
-
         if (firstRender)
         {
-            await RenderLastMonthTransactions();
+            Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ThenByDescending(t => t.Id).ToList();
+            currentBalance = Transactions.First().Balance.ToString("C");
+
+            await RenderTransactionReport();
             await RenderProjectedMonthlyBalanceByRange();
         }
 
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    private async Task RenderLastMonthTransactions()
+    private async Task RenderTransactionReport()
     {
+        transactionReport = GetTransactionReport(
+            monthlyStartDate,
+            monthlyEndDate
+        );
+
         var data = new ChartData
         {
-            Labels = GetMonthNamesInRange(monthlyStartDate, monthlyEndDate),
+            Labels = transactionReport.Select(t => t.Key).ToList(),
             Datasets = new List<IChartDataset>()
             {
-                new BarChartDataset()
+                new PieChartDataset()
                 {
-                    Label = monthlyTransactionsByRange.First().Key,
-                    Data = new List<double?>{ monthlyTransactionsByRange.First().Value },
-                    BackgroundColor = new List<string>{ "palevioletred" },
-                    CategoryPercentage = 0.8,
-                    BarPercentage = 0.1 * monthlyTransactionsByRange.Count(),
-                },
-                new BarChartDataset()
-                {
-                    Label = monthlyTransactionsByRange.Last().Key,
-                    Data = new List<double?>{ monthlyTransactionsByRange.Last().Value },
-                    BackgroundColor = new List<string> { "PaleGreen" },
-                    CategoryPercentage = 0.8,
-                    BarPercentage = 0.1 * monthlyTransactionsByRange.Count(),
+                    Data = transactionReport.Select(t => t.Value).ToList(),
+                    BackgroundColor = transactionReport.Select(t =>
+                    {
+                        if (t.Key == "Paycheck")
+                        {
+                            return "PaleGreen";
+                        }
+                        else
+                        {
+                            return "palevioletred";
+                        }
+                    }).ToList(),
                 }
             }
         };
 
-        var options = new BarChartOptions();
+        var options = new PieChartOptions();
+        {
+            options.Plugins.Legend.Position = "left";
+            options.Responsive = true;
+        }
 
-        options.Interaction.Mode = InteractionMode.Index;
-
-        options.Plugins.Title!.Text = "Recent Transactions";
-        options.Plugins.Title.Display = true;
-        options.Plugins.Title.Font = new ChartFont { Size = 20 };
-
-        options.Responsive = true;
-
-        options.Scales.X!.Title = new ChartAxesTitle { Text = "Month", Display = true };
-        options.Scales.Y!.Title = new ChartAxesTitle { Text = "Total", Display = true };
-
-        await monthlyTransactionsByRangeChart.InitializeAsync(data, options);
+        await transactionReportChart.InitializeAsync(data, options);
+        await transactionReportChart.UpdateAsync(data, options);
     }
 
     private async Task RenderProjectedMonthlyBalanceByRange()
     {
+        projectedMonthlyBalanceByRange = GetProjectedMonthlyBalanceByRange(
+            projectedStartDate,
+            projectedEndDate
+        );
+
         var data = new ChartData
         {
             Labels = projectedMonthlyBalanceByRange.Select(p => p.Key).ToList(),
@@ -229,7 +253,6 @@ AllowRowClick="true">
         {
             new LineChartDataset()
             {
-                Label = "Balance",
                 Data = projectedMonthlyBalanceByRange.Select(p => p.Value).ToList(),
                 BackgroundColor = "PaleGreen",
                 BorderColor = "PaleGreen",
@@ -244,24 +267,24 @@ AllowRowClick="true">
     };
 
         var options = new LineChartOptions();
-
-        options.Interaction.Mode = InteractionMode.Index;
-
-        options.Plugins.Title!.Text = "Projected Balance";
-        options.Plugins.Title.Display = true;
-        options.Plugins.Title.Font = new ChartFont { Size = 20 };
-
-        options.Responsive = true;
-
-        options.Scales.X!.Title = new ChartAxesTitle { Text = "Month", Display = true };
-        options.Scales.Y!.Title = new ChartAxesTitle { Text = "Total", Display = true };
+        {
+            options.Interaction.Mode = InteractionMode.Index;
+            options.Plugins.Legend.Display = false;
+            options.Responsive = true;
+            options.MaintainAspectRatio = false;
+        }
 
         await projectedMonthlyBalanceByRangeChart.InitializeAsync(data, options);
+        await projectedMonthlyBalanceByRangeChart.UpdateAsync(data, options);
     }
 
     private async Task<GridDataProviderResult<TransactionDTO>> TransactionsDataProvider(GridDataProviderRequest<TransactionDTO> request)
     {
         Transactions = (await TransactionService.List()).OrderByDescending(t => t.Date).ThenByDescending(t => t.Id).ToList();
+        currentBalance = Transactions.First().Balance.ToString("C");
+
+        await RenderTransactionReport();
+        await RenderProjectedMonthlyBalanceByRange();
 
         return await Task.FromResult(request.ApplyTo(Transactions));
     }
