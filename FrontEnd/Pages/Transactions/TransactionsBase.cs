@@ -65,11 +65,25 @@ namespace FrontEnd.Pages.Transactions
             TransactionDTO lastPaycheck = Transactions.First(t => t.Description == "Paycheck");
             double? currentBalance = Transactions.First().Balance;
             List<TransactionDTO> projections = new List<TransactionDTO>();
-            double expenses = Math.Round(Transactions.Where(t => t.Date.Month == startDate.AddMonths(-1).Month && t.Date.Year == startDate.Year && t.Amount < 0).Sum(t => t.Amount), 0);
+            List<TransactionDTO> expensesMonth1 = Transactions.Where(t => t.Date >= startDate.AddMonths(-3) && t.Date <= startDate.AddMonths(-2).AddDays(-1) && t.Amount < 0).DistinctBy(t => t.Description).ToList();
+            List<TransactionDTO> expensesMonth2 = Transactions.Where(t => t.Date >= startDate.AddMonths(-2) && t.Date <= startDate.AddMonths(-1).AddDays(-1) && t.Amount < 0).DistinctBy(t => t.Description).ToList();
+            List<TransactionDTO> expensesMonth3 = Transactions.Where(t => t.Date >= startDate.AddMonths(-1) && t.Date <= startDate.AddDays(-1) && t.Amount < 0).DistinctBy(t => t.Description).ToList();
+            HashSet<string?> commonDescriptions = expensesMonth1.Select(t => t.Description)
+                .Intersect(expensesMonth2.Select(t => t.Description))
+                .Intersect(expensesMonth3.Select(t => t.Description))
+                .ToHashSet();
+            commonDescriptions.ToList().ForEach(c => Console.WriteLine($"commonDescription: {c}"));
+            double expenses = Math.Round(Transactions
+                .Where(t => t.Amount < 0 &&
+                           commonDescriptions.Contains(t.Description) &&
+                           t.Date >= startDate.AddMonths(-3) &&
+                           t.Date <= startDate.AddDays(-1))
+                .Sum(t => t.Amount) / 3, 0);
+            Console.WriteLine($"expenses: {expenses}");
             int biweekly = (endDate.DayNumber - startDate.DayNumber) / 14;
             int months = GetMonthsDifference(startDate, endDate);
 
-            projections.AddRange(Enumerable.Range(1, biweekly + 1)
+            projections.AddRange(Enumerable.Range(0, biweekly + 1)
                 .Select(i => new TransactionDTO
                 {
                     Date = lastPaycheck.Date.AddDays(i * 14),
@@ -77,7 +91,7 @@ namespace FrontEnd.Pages.Transactions
                     Description = "Projected Paycheck"
                 }
             ));
-            projections.AddRange(Enumerable.Range(1, months)
+            projections.AddRange(Enumerable.Range(0, months)
                 .Select(i => new TransactionDTO
                 {
                     Date = lastPaycheck.Date.AddMonths(i),
@@ -86,10 +100,10 @@ namespace FrontEnd.Pages.Transactions
                 }
             ));
 
-            List<double?> balance = Enumerable.Range(1, months).Select(i =>
+            List<double?> balance = Enumerable.Range(0, months).Select(i =>
                 projections.Where(t =>
-                    t.Date.Month == DateTime.Now.AddMonths(i).Month &&
-                    t.Date.Year == DateTime.Now.AddMonths(i).Year)
+                    t.Date >= startDate.AddMonths(i) &&
+                    t.Date <= startDate.AddMonths(i + 1).AddDays(-1))
                 .Sum(t => t.Amount))
                 .Cast<double?>().ToList();
 
@@ -101,7 +115,7 @@ namespace FrontEnd.Pages.Transactions
 
             List<KeyValuePair<string, double?>> projection = Enumerable.Range(1, months)
                 .Select(i => {
-                    string month = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).AddMonths(i).ToString("MMMM");
+                    string month = startDate.AddMonths(i).ToString("MMMM");
                     double? amount = balance[i - 1];
                     return new KeyValuePair<string, double?>(month, amount);
                 }).ToList();
